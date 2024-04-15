@@ -197,8 +197,47 @@ app.get('/api/UniquePcNames/:state',(req,res)=>{
 }
 );
 
+app.get("api/UniqueAcNames/:state",(req,res)=>{
+  connection.query(quaries.UniqueAcNamesInaStateInLastestYear,[req.params.state ,req.params.state],(err,results)=>{
+    if(err){
+      console.error(err.message)
+      res.status(500).send(err);
+    }
+    else{
+      console.log(results)
+      res.status(200).json(results);
+    }
+  })
+}
+);
+
 app.get('/api/TotalVotepollbyaCandidateinapc/:state/:pc_name',(req,res)=>{
   connection.query(quaries.TotalVotepollbyaCandidateinapc,[req.params.pc_name ,req.params.state],(err,results)=>{
+    if(err){
+      console.error(err.message)
+      res.status(500).send(err);
+    }
+    else{
+      console.log(results)
+      res.status(200).json(results);
+    }
+  })
+});
+
+app.get('/api/TotalVotepollbyaCandidateinaac/:state/:pc_name',(req,res)=>{
+  connection.query(quaries.TotalVotepollbyaCandidateinaac,[req.params.pc_name ,req.params.state],(err,results)=>{
+    if(err){
+      console.error(err.message)
+      res.status(500).send(err);
+    }
+    else{
+      console.log(results)
+      res.status(200).json(results);
+    }
+  })
+});
+app.get('/api/TotalVotepollbyaCandidateinaac/:state/:pc_name',(req,res)=>{
+  connection.query(quaries.TotalVotepollbyaCandidateinaac,[req.params.pc_name ,req.params.state],(err,results)=>{
     if(err){
       console.error(err.message)
       res.status(500).send(err);
@@ -368,6 +407,17 @@ app.get('/api/VotePercentageinApcPCyearwise/:state/:pc_name',(req,res)=>{
     }
   })
 })
+app.get('/api/VotePercentageinApcACyearwise/:state/:pc_name',(req,res)=>{
+  connection.query(quaries.VotePercentageinApcACyearwise,[req.params.pc_name ,req.params.state],(err,results)=>{
+    if(err){
+      console.error(err.message);
+      res.status(500).send(err);
+    }
+    else{
+      res.status(200).json(results);
+    }
+  })
+})
 app.get('/api/vote_percentage_latest_year/:pc_name/:st_name', (req, res) => {
   connection.query(quaries.VotePercentageinLastestYearinSpeficyear, 
     [req.params.pc_name, req.params.st_name], 
@@ -499,6 +549,18 @@ app.get('/api/FemaleandMaleRationinApcPCyearwise/:state/:pc_name',(req,res)=>{
   })
 })
 
+app.get('/api/FemaleandMaleRationinApcACyearwise/:state/:pc_name',(req,res)=>{
+  connection.query(quaries.FemaleandMaleRationinApcACyearwise,[req.params.pc_name ,req.params.state],(err,results)=>{
+    if(err){
+      console.error(err.message);
+      res.status(500).send(err);
+    }
+    else{
+      res.status(200).json(results);
+    }
+  })
+})
+
 
 app.get('/api/AvgFemaleandMaleRationinApcPCyearwise/:state/:pc_name',(req,res)=>{
   connection.query(quaries.AvgFemaleandMaleRationinApcPCyearwise,[req.params.pc_name ,req.params.state],(err,results)=>{
@@ -551,11 +613,38 @@ app.get('/api/candidate_status/:state/:pc_name', (req, res) => {
     }
   );
 });
+app.get('/api/candidate_statusinac/:state/:pc_name', (req, res) => {
+  connection.query(quaries.Candidatesdetailsinacanalysis, 
+    [req.params.pc_name, req.params.state, req.params.pc_name, req.params.state], 
+    (err, results) => {
+      if (err) {
+        console.error(err.message);
+        res.status(500).send(err);
+      } else {
+        res.status(200).json(results);
+      }
+    }
+  );
+});
 
 
 app.get('/api/winner_latest_year/:state/:pc_name', (req, res) => {
   connection.query(
     quaries.PcDetails, 
+    [req.params.pc_name, req.params.state, req.params.pc_name, req.params.state], 
+    (err, results) => {
+      if (err) {
+        console.error(err.message);
+        res.status(500).send(err);
+      } else {
+        res.status(200).json(results);
+      }
+    }
+  );
+});
+app.get('/api/winner_latest_yearinac/:state/:pc_name', (req, res) => {
+  connection.query(
+    quaries.AcDetails, 
     [req.params.pc_name, req.params.state, req.params.pc_name, req.params.state], 
     (err, results) => {
       if (err) {

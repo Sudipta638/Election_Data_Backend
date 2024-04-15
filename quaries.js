@@ -60,8 +60,12 @@ where st_name = ?
     "select  year , totvotpoll , partyname ,cand_name from state_elections where ac_name =? and st_name = ? ",
   UniquePcNamesInaStateInLastestYear:
     "SELECT DISTINCT pc_name FROM national_elections WHERE st_name = ? AND year = (SELECT MAX(year) FROM national_elections WHERE st_name = ?)",
+    UniqueAcNamesInaStateInLastestYear:
+    "SELECT DISTINCT ac_name FROM state_elections WHERE st_name = ? AND year = (SELECT MAX(year) FROM state_elections WHERE st_name = ?)",
   TotalVotepollbyaCandidateinapc:
     "select  year , totvotpoll , partyname ,cand_name from national_elections where pc_name =? and st_name = ? ",
+  TotalVotepollbyaCandidateinaac:
+    "select  year , totvotpoll , partyname ,cand_name from state_elections where ac_name =? and st_name = ? ",
   UnionofPartynameinStateandNationalElectionsortedbyAlaphabet:
     "SELECT partyname FROM national_elections  INTERSECT SELECT partyname FROM state_election",
   pcWonByPartyYearwise: `
@@ -157,6 +161,15 @@ WHERE pc_name = ? and st_name = ?
 GROUP BY year, pc_name, electors
 
 `,
+VotePercentageinApcACyearwise:
+`
+SELECT year, ac_name, (SUM(totvotpoll) / electors) * 100 AS vote_percentage
+FROM state_elections
+WHERE ac_name = ? and st_name = ?
+GROUP BY year, ac_name, electors
+
+
+`,
 
   MinVotePercentageinApcPCyearwise: `
 SELECT Min(vote_percentage) AS min_vote_percentage
@@ -217,6 +230,19 @@ FROM national_elections
 WHERE pc_name = ? and st_name = ?
 GROUP BY year, pc_name
 `,
+  FemaleandMaleRationinApcACyearwise: `
+SELECT year, pc_name, SUM(IF(cand_sex = 'F', 1, 0)) / SUM(IF(cand_sex = 'M', 1, 0)) AS female_to_male_ratio
+FROM national_elections
+WHERE pc_name = ? and st_name = ?
+GROUP BY year, pc_name
+`,
+FemaleandMaleRationinApcACyearwise:
+`
+SELECT year, ac_name, SUM(IF(cand_sex = 'F', 1, 0)) / SUM(IF(cand_sex = 'M', 1, 0)) AS female_to_male_ratio
+FROM state_elections
+WHERE ac_name = ? and st_name = ?
+GROUP BY year, ac_name
+`,
   AvgFemaleandMaleRationinApcPCyearwise: `
 SELECT AVG(female_to_male_ratio) AS avg_female_to_male_ratio
 FROM (
@@ -258,6 +284,58 @@ JOIN (
 ) subquery ON ne.year = subquery.year AND ne.pc_no = subquery.pc_no
 WHERE ne.pc_name = ? AND ne.st_name = ?
 `,
+Candidatesdetailsinacanalysis:
+`
+SELECT ne.cand_name, ne.year ,ne.pc_type , (ne.totvotpoll / electors) * 100 AS vote_percentage, 
+       IF(ne.totvotpoll = subquery.max_votes, 'Win', 'Lose') AS status
+FROM national_elections ne
+JOIN (
+  SELECT year, pc_no, MAX(totvotpoll) AS max_votes
+  FROM national_elections
+  WHERE pc_name = ?  AND st_name = ?
+  GROUP BY year, pc_no
+) subquery ON ne.year = subquery.year AND ne.pc_no = subquery.pc_no
+WHERE ne.pc_name = ? AND ne.st_name = ?
+`,
+Candidatesdetailsinacanalysis:
+`
+SELECT se.cand_name, se.year ,se.ac_type , (se.totvotpoll / electors) * 100 AS vote_percentage,
+        IF(se.totvotpoll = subquery.max_votes, 'Win', 'Lose') AS status
+FROM state_elections se
+JOIN (
+  SELECT year, ac_no, MAX(totvotpoll) AS max_votes
+  FROM state_elections
+  WHERE ac_name = ?  AND st_name = ?
+  GROUP BY year, ac_no
+) subquery ON se.year = subquery.year AND se.ac_no = subquery.ac_no
+WHERE se.ac_name = ? AND se.st_name = ? 
+`,
+  TotalVoteRecivedByaCandidateinNationalElectioninLatestyear:
+    "SELECT SUM(totvotpoll) AS total_votes FROM national_elections WHERE cand_name = ? AND year = (SELECT MAX(year) FROM national_elections)",
+
+  TotalVoteRecivedByaCandidateinStateElectioninLatestyear:
+    "SELECT SUM(totvotpoll) AS total_votes FROM state_elections WHERE cand_name = ? AND year = (SELECT MAX(year) FROM state_elections)",
+
+  TotalVoteRecivedByaCandidateinNationalElectioninLatestyear:
+    "SELECT SUM(totvotpoll) AS total_votes FROM national_elections WHERE cand_name = ? AND year = (SELECT MAX(year) FROM national_elections)",
+
+  TotalVoteRecivedByaCandidateinStateElectioninLatestyear:
+    "SELECT SUM(totvotpoll) AS total_votes FROM state_elections WHERE cand_name = ? AND year = (SELECT MAX(year) FROM state_elections)",
+
+  TotalVoteRecivedByaCandidateinNationalElectioninLatestyear:
+    "SELECT SUM(totvotpoll) AS total_votes FROM national_elections WHERE cand_name = ? AND year = (SELECT MAX(year) FROM national_elections)",
+
+  TotalVoteRecivedByaCandidateinStateElectioninLatestyear:
+    "SELECT SUM(totvotpoll) AS total_votes FROM state_elections WHERE cand_name = ? AND year = (SELECT MAX(year) FROM state_elections)",
+
+  TotalVoteRecivedByaCandidateinNationalElectioninLatestyear:
+    "SELECT SUM(totvotpoll) AS total_votes FROM national_elections WHERE cand_name = ? AND year = (SELECT MAX(year) FROM national_elections)",
+
+  TotalVoteRecivedByaCandidateinStateElectioninLatestyear:
+    "SELECT SUM(totvotpoll) AS total_votes FROM state_elections WHERE cand_name = ? AND year = (SELECT MAX(year) FROM state_elections)",
+
+
+
  PcDetails:
  `
  SELECT ne.cand_name, ne.partyname, ne.totvotpoll, subquery.total_votes
@@ -270,6 +348,20 @@ JOIN (
   GROUP BY year, pc_no
 ) subquery ON ne.year = subquery.year AND ne.pc_no = subquery.pc_no AND ne.totvotpoll = subquery.max_votes
 WHERE ne.pc_name =  ?  AND ne.st_name = ? 
+ `,
+ AcDetails:
+ `
+  SELECT se.cand_name, se.partyname, se.totvotpoll, subquery.total_votes
+FROM state_elections se
+JOIN (
+  SELECT year, ac_no, MAX(totvotpoll) AS max_votes, SUM(totvotpoll) AS total_votes
+  FROM state_elections
+  WHERE ac_name = ?
+  AND st_name = ?   AND year = (SELECT MAX(year) FROM state_elections)
+  GROUP BY year, ac_no
+) subquery ON se.year = subquery.year AND se.ac_no = subquery.ac_no AND se.totvotpoll = subquery.max_votes
+WHERE se.ac_name = ?  AND se.st_name = ?
+
  `,
  pcWonByASpecififcpartyinlatestyear:
  `
